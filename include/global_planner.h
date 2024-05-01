@@ -77,9 +77,6 @@ private:
     double distance_to_goal;
 
     // 规划器状态
-    bool odom_ready;
-    bool drone_ready;
-    bool sensor_ready;
     bool goal_ready; 
     bool is_safety;
     bool is_new_path;
@@ -94,7 +91,6 @@ private:
     float desired_yaw;
 
     ros::Time tra_start_time;
-    float tra_running_time;
     
     // 打印的提示消息
     string message;
