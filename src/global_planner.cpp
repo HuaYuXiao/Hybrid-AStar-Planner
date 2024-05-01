@@ -1,10 +1,8 @@
 #include "global_planner.h"
 
-namespace Global_Planning
-{
+namespace Global_Planning{
 // 初始化函数
-void Global_Planner::init(ros::NodeHandle& nh)
-{
+void Global_Planner::init(ros::NodeHandle& nh){
     // 读取参数
     // 选择算法，　0 代表A_star; 1 代表混合A_star
     nh.param("global_planner/algorithm_mode", algorithm_mode, 1);
@@ -26,7 +24,7 @@ void Global_Planner::init(ros::NodeHandle& nh)
     drone_state_sub = nh.subscribe<prometheus_msgs::DroneState>("/prometheus/drone_state", 10, &Global_Planner::drone_state_cb, this);
     // 根据map_input选择地图更新方式
     if(map_input == 0){
-        Gpointcloud_sub = nh.subscribe<sensor_msgs::PointCloud2>("/prometheus/global_planning/global_pcl", 1, &Global_Planner::Gpointcloud_cb, this);
+        Gpointcloud_sub = nh.subscribe<sensor_msgs::PointCloud2>("/prometheus/global_planning/global_pcl", 10, &Global_Planner::Gpointcloud_cb, this);
     }else if(map_input == 1){
         Lpointcloud_sub = nh.subscribe<sensor_msgs::PointCloud2>("/prometheus/global_planning/local_pcl", 1, &Global_Planner::Lpointcloud_cb, this);
     }else if(map_input == 2){
@@ -49,6 +47,8 @@ void Global_Planner::init(ros::NodeHandle& nh)
     // 设置cout的精度为小数点后两位
     std::cout << std::fixed << std::setprecision(2);
 
+    cout << "[planner] Hybrid Astar Planner initialized!" << endl;
+
     Astar_ptr.reset(new KinodynamicAstar);
     Astar_ptr->init(nh);
 
@@ -66,26 +66,21 @@ void Global_Planner::init(ros::NodeHandle& nh)
     desired_yaw = 0.0;
 }
 
-void Global_Planner::goal_cb(const geometry_msgs::PoseStampedConstPtr& msg)
-{
+void Global_Planner::goal_cb(const geometry_msgs::PoseStampedConstPtr& msg){
         goal_pos << msg->pose.position.x, msg->pose.position.y, _DroneState.position[2];
         
     goal_vel.setZero();
 
     goal_ready = true;
-
-    // 获得新目标点
-    cout << "[planner] Get a new goal "<< goal_pos << endl;
 }
 
-void Global_Planner::drone_state_cb(const prometheus_msgs::DroneStateConstPtr& msg)
-{
+void Global_Planner::drone_state_cb(const prometheus_msgs::DroneStateConstPtr& msg){
     _DroneState = *msg;
 
         start_pos << msg->position[0], msg->position[1], msg->position[2];
         start_vel << msg->velocity[0], msg->velocity[1], msg->velocity[2];
 
-    start_acc << 0.0, 0.0, 0.0;
+    start_acc.setZero();
 
     Drone_odom.header = _DroneState.header;
     Drone_odom.child_frame_id = "base_link";
@@ -101,28 +96,10 @@ void Global_Planner::drone_state_cb(const prometheus_msgs::DroneStateConstPtr& m
 // 根据全局点云更新地图
 // 情况：已知全局点云的场景、由SLAM实时获取的全局点云
 void Global_Planner::Gpointcloud_cb(const sensor_msgs::PointCloud2ConstPtr &msg){
-    if(!map_groundtruth)
-    {
         // 对Astar中的地图进行更新
         Astar_ptr->Occupy_map_ptr->map_update_gpcl(msg);
         // 并对地图进行膨胀
-        Astar_ptr->Occupy_map_ptr->inflate_point_cloud(); 
-    }else
-    {
-        static int update_num=0;
-        update_num++;
-
-        // 此处改为根据循环时间计算的数值
-        if(update_num == 10)
-        {
-            // 对Astar中的地图进行更新
-            Astar_ptr->Occupy_map_ptr->map_update_gpcl(msg);
-            // 并对地图进行膨胀
-            Astar_ptr->Occupy_map_ptr->inflate_point_cloud(); 
-            update_num = 0;
-        } 
-    }
-    
+        Astar_ptr->Occupy_map_ptr->inflate_point_cloud();
 }
 
 // 根据局部点云更新地图
@@ -155,13 +132,6 @@ void Global_Planner::track_path_cb(const ros::TimerEvent& e)
     //     // 若无人机与障碍物之间的距离小于安全距离，则停止执行路径
     //     // 但如何脱离该点呢？
     //     pub_message(message_pub, prometheus_msgs::Message::WARN, NODE_NAME, "Drone Position Dangerous! STOP HERE and wait for new goal.");
-        
-    //     Command_Now.header.stamp = ros::Time::now();
-    //     Command_Now.Mode         = prometheus_msgs::ControlCommand::Hold;
-    //     Command_Now.Command_ID   = Command_Now.Command_ID + 1;
-    //     Command_Now.source = NODE_NAME;
-
-    //     command_pub.publish(Command_Now);
 
     //     goal_ready = false;
     //     exec_state = EXEC_STATE::WAIT_GOAL;
@@ -252,23 +222,18 @@ void Global_Planner::track_path_cb(const ros::TimerEvent& e)
 // 主循环 
 void Global_Planner::mainloop_cb(const ros::TimerEvent& e)
 {
-    switch (exec_state)
-    {
-        case WAIT_GOAL:
-        {
+    switch (exec_state){
+        case WAIT_GOAL:{
             path_ok = false;
-            if(!goal_ready){
-                    cout << "Waiting for a new goal." << endl;
-            }else{
+            if(goal_ready){
                 // 获取到目标点后，生成新轨迹
                 exec_state = EXEC_STATE::PLANNING;
                 goal_ready = false;
             }
-            
             break;
         }
-        case PLANNING:
-        {
+
+        case PLANNING:{
             // 重置规划器
             Astar_ptr->reset();
             // 使用规划器执行搜索，返回搜索结果
@@ -279,11 +244,17 @@ void Global_Planner::mainloop_cb(const ros::TimerEvent& e)
 
             int astar_state = Astar_ptr->search(start_pos, start_vel, start_acc, goal_pos, goal_vel, init, dynamic, time_start);
 
-            if(astar_state==KinodynamicAstar::NO_PATH)
-            {
+            if(astar_state==KinodynamicAstar::NO_PATH){
                 path_ok = false;
                 exec_state = EXEC_STATE::WAIT_GOAL;
-                cout << "astar find no path, please reset the goal!" << endl;
+
+                     Command_Now.header.stamp = ros::Time::now();
+                     Command_Now.Mode         = prometheus_msgs::ControlCommand::Hold;
+                     Command_Now.Command_ID   = Command_Now.Command_ID + 1;
+                     Command_Now.source = NODE_NAME;
+                     command_pub.publish(Command_Now);
+
+                cout << "[planner] astar find no path, HOLD" << endl;
             }else{
                 path_ok = true;
                 is_new_path = true;
@@ -302,23 +273,20 @@ void Global_Planner::mainloop_cb(const ros::TimerEvent& e)
 }
 
 // 【获取当前时间函数】 单位：秒
-float Global_Planner::get_time_in_sec(const ros::Time& begin_time)
-{
+float Global_Planner::get_time_in_sec(const ros::Time& begin_time){
     ros::Time time_now = ros::Time::now();
     float currTimeSec = time_now.sec - begin_time.sec;
     float currTimenSec = time_now.nsec / 1e9 - begin_time.nsec / 1e9;
     return (currTimeSec + currTimenSec);
 }
 
-void Global_Planner::safety_cb(const ros::TimerEvent& e)
-{
+void Global_Planner::safety_cb(const ros::TimerEvent& e){
     Eigen::Vector3d cur_pos(_DroneState.position[0], _DroneState.position[1], _DroneState.position[2]);
     
     is_safety = Astar_ptr->check_safety(cur_pos, safe_distance);
 }
 
-int Global_Planner::get_start_point_id(void)
-{
+int Global_Planner::get_start_point_id(void){
     // 选择与当前无人机所在位置最近的点,并从该点开始追踪
     int id = 0;
     float distance_to_wp_min = abs(path_cmd.poses[0].pose.position.x - _DroneState.position[0])
@@ -327,25 +295,21 @@ int Global_Planner::get_start_point_id(void)
     
     float distance_to_wp;
 
-    for (int j=1; j<Num_total_wp;j++)
-    {
+    for (int j=1; j<Num_total_wp;j++){
         distance_to_wp = abs(path_cmd.poses[j].pose.position.x - _DroneState.position[0])
                                 + abs(path_cmd.poses[j].pose.position.y - _DroneState.position[1])
                                 + abs(path_cmd.poses[j].pose.position.z - _DroneState.position[2]);
         
-        if(distance_to_wp < distance_to_wp_min)
-        {
+        if(distance_to_wp < distance_to_wp_min){
             distance_to_wp_min = distance_to_wp;
             id = j;
         }
     }
 
     //　为防止出现回头的情况，此处对航点进行前馈处理
-    if(id + 8 < Num_total_wp)
-    {
-        id = id + 8;
+    if(id + 4 < Num_total_wp){
+        id = id + 4;
     }
-
     return id;
 }
 }
