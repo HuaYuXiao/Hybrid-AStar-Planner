@@ -7,10 +7,6 @@
         <remap from="/prometheus/global_planning/global_pcl" to="$(arg topic_of_global_pcl)" />
 
         <!-- 参数 -->
-        <!-- 二维平面规划 -->
-        <param name="global_planner/is_2D" value="false" type="bool"/>
-        <!-- ２维高度，建议与起飞高度一致 -->
-        <param name="global_planner/fly_height_2D" value="1.0" type="double"/>
         <!-- 停止距离 -->
         <param name="global_planner/safe_distance" value="0.01" type="double"/>
         <param name="global_planner/time_per_path" value="1.0" type="double"/>

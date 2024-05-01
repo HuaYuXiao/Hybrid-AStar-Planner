@@ -8,11 +8,7 @@ void Global_Planner::init(ros::NodeHandle& nh)
 {
     // 读取参数
     // 选择算法，　0 代表A_star; 1 代表混合A_star
-    nh.param("global_planner/algorithm_mode", algorithm_mode, 0);
-    // TRUE代表2D平面规划及搜索,FALSE代表3D
-    nh.param("global_planner/is_2D", is_2D, false);
-    // 2D规划时,定高高度
-    nh.param("global_planner/fly_height_2D", fly_height_2D, 1.5);
+    nh.param("global_planner/algorithm_mode", algorithm_mode, 1);
     // 安全距离，若膨胀距离设置已考虑安全距离，建议此处设为0
     nh.param("global_planner/safe_distance", safe_distance, 0.05); 
     nh.param("global_planner/time_per_path", time_per_path, 1.0); 
@@ -90,36 +86,15 @@ void Global_Planner::goal_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     // 获得新目标点
     pub_message(message_pub, prometheus_msgs::Message::NORMAL, NODE_NAME,"Get a new goal point");
 
-    cout << "Get a new goal point:"<< goal_pos(0) << " [m] "  << goal_pos(1) << " [m] "  << goal_pos(2)<< " [m] "   <<endl;
-
-    if(goal_pos(0) == 99 && goal_pos(1) == 99 )
-    {
-        path_ok = false;
-        goal_ready = false;
-        exec_state = EXEC_STATE::LANDING;
-        pub_message(message_pub, prometheus_msgs::Message::NORMAL, NODE_NAME,"Land");
-    }
-
+    cout << "[planner] Get a new goal "<< goal_pos << endl;
 }
 
 void Global_Planner::drone_state_cb(const prometheus_msgs::DroneStateConstPtr& msg)
 {
     _DroneState = *msg;
 
-    if (is_2D == true)
-    {
-        start_pos << msg->position[0], msg->position[1], fly_height_2D;
-        start_vel << msg->velocity[0], msg->velocity[1], 0.0;
-
-        if(abs(fly_height_2D - msg->position[2]) > 0.2)
-        {
-            pub_message(message_pub, prometheus_msgs::Message::WARN, NODE_NAME,"Drone is not in the desired height.");
-        }
-    }else
-    {
         start_pos << msg->position[0], msg->position[1], msg->position[2];
         start_vel << msg->velocity[0], msg->velocity[1], msg->velocity[2];
-    }
 
     start_acc << 0.0, 0.0, 0.0;
 
@@ -393,8 +368,6 @@ void Global_Planner::mainloop_cb(const ros::TimerEvent& e)
                 path_cmd_pub.publish(path_cmd);
                 pub_message(message_pub, prometheus_msgs::Message::NORMAL, NODE_NAME, "astart find path success!");
             }
-            
-            
 
             break;
         }

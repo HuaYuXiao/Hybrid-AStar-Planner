@@ -18,11 +18,8 @@ KinodynamicAstar::~KinodynamicAstar()
 
 void KinodynamicAstar::init(ros::NodeHandle& nh)
 {
-  // 2d参数
-  nh.param("global_planner/is_2D", is_2D, 0);  // 1代表2D平面规划及搜索,0代表3D
-  nh.param("global_planner/2D_fly_height", fly_height, 1.5);  // 2D规划时,定高高度
   // 地图参数
-  nh.param("map/resolution", resolution_, 0.2);  // 地图分辨率
+  nh.param("map/resolution", resolution_, 0.05);  // 地图分辨率
 
   // 规划搜索相关参数
   nh.param("kinodynamic_astar/lambda_heu", lambda_heu_, 2.0);  // 加速引导参数

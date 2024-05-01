@@ -44,8 +44,6 @@ private:
 
     // 参数
     int algorithm_mode;
-    bool is_2D;
-    double fly_height_2D;
     double safe_distance;
     double time_per_path;
     int map_input;

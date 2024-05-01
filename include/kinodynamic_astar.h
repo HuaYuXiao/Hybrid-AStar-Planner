@@ -134,8 +134,6 @@ private:
   int max_search_num;
   // tie breaker
   double tie_breaker_;
-  int is_2D;
-  double fly_height;
 
   /* ---------- record data ---------- */
   //　起始速度，起始加速度

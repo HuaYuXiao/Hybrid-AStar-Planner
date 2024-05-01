@@ -5,22 +5,18 @@ namespace Global_Planning
 // 初始化函数
 void Occupy_map::init(ros::NodeHandle& nh)
 {
-    // TRUE代表2D平面规划及搜索,FALSE代表3D 
-    nh.param("global_planner/is_2D", is_2D, true); 
-    // 2D规划时,定高高度
-    nh.param("global_planner/fly_height_2D", fly_height_2D, 1.0);
     // 地图原点
-    nh.param("map/origin_x", origin_(0), -5.0);
+    nh.param("map/origin_x", origin_(0), -8.0);
     nh.param("map/origin_y", origin_(1), -5.0);
     nh.param("map/origin_z", origin_(2), 0.0);
     // 地图实际尺寸，单位：米
-    nh.param("map/map_size_x", map_size_3d_(0), 10.0);
+    nh.param("map/map_size_x", map_size_3d_(0), 16.0);
     nh.param("map/map_size_y", map_size_3d_(1), 10.0);
-    nh.param("map/map_size_z", map_size_3d_(2), 5.0);
+    nh.param("map/map_size_z", map_size_3d_(2), 3.0);
     // 地图分辨率，单位：米
-    nh.param("map/resolution", resolution_,  0.2);
+    nh.param("map/resolution", resolution_,  0.05);
     // 地图膨胀距离，单位：米
-    nh.param("map/inflate", inflate_,  0.3);
+    nh.param("map/inflate", inflate_,  0.35);
 
     // 发布 地图rviz显示
     global_pcl_pub = nh.advertise<sensor_msgs::PointCloud2>("/prometheus/planning/global_pcl",  10); 
@@ -42,14 +38,7 @@ void Occupy_map::init(ros::NodeHandle& nh)
     fill(occupancy_buffer_.begin(), occupancy_buffer_.end(), 0.0);
 
     min_range_ = origin_;
-    max_range_ = origin_ + map_size_3d_;   
-
-    // 对于二维情况，重新限制点云高度
-    if(is_2D == true)
-    {
-        min_range_(2) = fly_height_2D - resolution_;
-        max_range_(2) = fly_height_2D + resolution_;
-    }
+    max_range_ = origin_ + map_size_3d_;
 }
 
 // 地图更新函数 - 输入：全局点云
