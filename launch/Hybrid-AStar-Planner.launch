@@ -9,7 +9,7 @@
         <!-- 参数 -->
         <!-- 停止距离 -->
         <param name="global_planner/safe_distance" value="0.01" type="double"/>
-        <param name="global_planner/time_per_path" value="1.0" type="double"/>
+        <param name="global_planner/time_per_path" value="0.5" type="double"/>
         <param name="global_planner/replan_time" value="2.0" type="double"/>
         <param name="global_planner/map_input" value="0" type="int"/>
         <param name="global_planner/sim_mode" value="true" type="bool"/>
@@ -27,7 +27,7 @@
         <param name="kinodynamic_astar/check_num" value="5" type="int"/>
 
         <!-- 分辨率 -->
-        <param name="map/resolution" value="0.05" type="double"/>
+        <param name="map/resolution" value="0.2" type="double"/>
         <!-- 障碍物膨胀距离 -->
         <param name="map/inflate" value="0.35" type="double"/>
         <!-- 地图范围 -->

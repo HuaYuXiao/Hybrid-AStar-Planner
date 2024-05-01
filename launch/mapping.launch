@@ -37,7 +37,7 @@
 <!--    </node>-->
 
     <node pkg="octomap_server" type="octomap_server_node" name="octomap_server">
-        <param name="resolution" value="0.05" />
+        <param name="resolution" value="0.2" />
         <!-- fixed map frame (set to 'map' if SLAM or localization running!) -->
         <param name="frame_id" type="string" value="map"/>
         <!-- maximum range to integrate (speedup!) -->
@@ -56,7 +56,7 @@
         <!-- <param name = "ground_filter/plane_distance" type = "double" value = "0.3" /> -->
         <!-- <param name = "filter_speckles" type = "bool" value = "true" /> -->
         <!-- 增加了半径滤波器 -->
-        <param name = "outrem_radius" value = "1.0" />
+        <param name = "outrem_radius" value = "0.35" />
         <param name = "outrem_neighbors" value = "10" />
         <!-- when building map, set to false to speed up!!! -->
         <param name = "latch" value = "false" />
