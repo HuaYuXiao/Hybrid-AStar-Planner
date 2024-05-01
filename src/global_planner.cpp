@@ -263,29 +263,17 @@ void Global_Planner::track_path_cb(const ros::TimerEvent& e)
 // 主循环 
 void Global_Planner::mainloop_cb(const ros::TimerEvent& e)
 {
-    static int exec_num=0;
-    exec_num++;
-
     // 检查当前状态，不满足规划条件则直接退出主循环
     // 此处打印消息与后面的冲突了，逻辑上存在问题
     if(!odom_ready || !drone_ready || !sensor_ready)
     {
-        // 此处改为根据循环时间计算的数值
-        if(exec_num == 10)
-        {
-            if(!odom_ready)
-            {
+            if(!odom_ready){
                 cout << "Need Odom." << endl;
-            }else if(!drone_ready)
-            {
+            }else if(!drone_ready){
                 cout << "Drone is not ready." << endl;
-            }else if(!sensor_ready)
-            {
+            }else if(!sensor_ready){
                 cout << "Need sensor info." << endl;
             }
-
-            exec_num=0;
-        }  
 
         return;
     }else
@@ -303,11 +291,7 @@ void Global_Planner::mainloop_cb(const ros::TimerEvent& e)
             path_ok = false;
             if(!goal_ready)
             {
-                if(exec_num == 10)
-                {
                     cout << "Waiting for a new goal." << endl;
-                    exec_num=0;
-                }
             }else
             {
                 // 获取到目标点后，生成新轨迹
@@ -324,7 +308,6 @@ void Global_Planner::mainloop_cb(const ros::TimerEvent& e)
             Astar_ptr->reset();
             // 使用规划器执行搜索，返回搜索结果
 
-            
             bool init = false;
             bool dynamic = false;
             double time_start = 0;
@@ -346,36 +329,13 @@ void Global_Planner::mainloop_cb(const ros::TimerEvent& e)
                 start_point_index = get_start_point_id();
                 cur_id = start_point_index;
                 tra_start_time = ros::Time::now();
-                exec_state = EXEC_STATE::TRACKING;
                 path_cmd_pub.publish(path_cmd);
                 cout << "astart find path success!" << endl;
             }
 
             break;
         }
-        case TRACKING:
-        {
-            // 本循环是1Hz,此处不是很精准
-            if(exec_num >= replan_time)
-            {
-                exec_state = EXEC_STATE::PLANNING;
-                exec_num = 0;
-            }
-
-            break;
-        }
-        case  LANDING:
-        {
-            Command_Now.header.stamp = ros::Time::now();
-            Command_Now.Mode         = prometheus_msgs::ControlCommand::Land;
-            Command_Now.Command_ID   = Command_Now.Command_ID + 1;
-            Command_Now.source = NODE_NAME;
-
-            command_pub.publish(Command_Now);
-            break;
-        }
     }
-
 }
 
 // 【获取当前时间函数】 单位：秒
