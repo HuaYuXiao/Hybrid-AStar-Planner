@@ -136,25 +136,13 @@ void Occupy_map::inflate_point_cloud(void)
                 }
     }
 
-    cloud_inflate_vis_.header.frame_id = "world";
+    cloud_inflate_vis_.header.frame_id = "map";
 
     // 转化为ros msg发布
     sensor_msgs::PointCloud2 map_inflate_vis;
     pcl::toROSMsg(cloud_inflate_vis_, map_inflate_vis);
 
     inflate_pcl_pub.publish(map_inflate_vis);
-
-    static int exec_num=0;
-    exec_num++;
-
-    // 此处改为根据循环时间计算的数值
-    if(exec_num == 20)
-    {
-        // 膨胀地图效率与地图大小有关（有点久，Astar更新频率是多久呢？ 怎么才能提高膨胀效率呢？）
-        printf("inflate global point take %f [s].\n",   (ros::Time::now()-time_start).toSec());
-        exec_num=0;
-    }  
-
 }
 
 void Occupy_map::setOccupancy(Eigen::Vector3d pos, int occ) 

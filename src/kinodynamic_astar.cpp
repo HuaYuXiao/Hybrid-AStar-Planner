@@ -645,19 +645,19 @@ nav_msgs::Path KinodynamicAstar::get_ros_path()
   nav_msgs::Path A_star_path_cmd;
   geometry_msgs::PoseStamped path_i_pose;
 
-  A_star_path_cmd.header.frame_id = "world";
+  A_star_path_cmd.header.frame_id = "map";
   A_star_path_cmd.header.stamp = ros::Time::now();
   A_star_path_cmd.poses.clear();
   for (int i=0; i<path.size(); ++i)
   {
-      path_i_pose.header.frame_id = "world";
+      path_i_pose.header.frame_id = "map";
       path_i_pose.pose.position.x = path[i](0);
       path_i_pose.pose.position.y = path[i](1);
       path_i_pose.pose.position.z = path[i](2);
       A_star_path_cmd.poses.push_back(path_i_pose);
   }
 
-  path_i_pose .header.frame_id = "world";
+  path_i_pose .header.frame_id = "map";
   path_i_pose.pose.position.x = goal_pos[0];
   path_i_pose.pose.position.y = goal_pos[1];
   path_i_pose.pose.position.z = goal_pos[2];
