@@ -2,7 +2,6 @@
 
 namespace Global_Planning
 {
-
 // 初始化函数
 void Global_Planner::init(ros::NodeHandle& nh)
 {
@@ -23,28 +22,22 @@ void Global_Planner::init(ros::NodeHandle& nh)
 
     // 订阅 目标点
     goal_sub = nh.subscribe<geometry_msgs::PoseStamped>("/prometheus/planning/goal", 1, &Global_Planner::goal_cb, this);
-
     // 订阅 无人机状态
     drone_state_sub = nh.subscribe<prometheus_msgs::DroneState>("/prometheus/drone_state", 10, &Global_Planner::drone_state_cb, this);
-
     // 根据map_input选择地图更新方式
-    if(map_input == 0)
-    {
+    if(map_input == 0){
         Gpointcloud_sub = nh.subscribe<sensor_msgs::PointCloud2>("/prometheus/global_planning/global_pcl", 1, &Global_Planner::Gpointcloud_cb, this);
-    }else if(map_input == 1)
-    {
+    }else if(map_input == 1){
         Lpointcloud_sub = nh.subscribe<sensor_msgs::PointCloud2>("/prometheus/global_planning/local_pcl", 1, &Global_Planner::Lpointcloud_cb, this);
-    }else if(map_input == 2)
-    {
+    }else if(map_input == 2){
         laserscan_sub = nh.subscribe<sensor_msgs::LaserScan>("/prometheus/global_planning/laser_scan", 1, &Global_Planner::laser_cb, this);
     }
 
     // 发布 路径指令
     command_pub = nh.advertise<prometheus_msgs::ControlCommand>("/prometheus/control_command", 10);
-    // 发布提示消息
-    message_pub = nh.advertise<prometheus_msgs::Message>("/prometheus/message/global_planner", 10);
     // 发布路径用于显示
-    path_cmd_pub   = nh.advertise<nav_msgs::Path>("/prometheus/global_planning/path_cmd",  10); 
+    path_cmd_pub   = nh.advertise<nav_msgs::Path>("/prometheus/global_planning/path_cmd",  10);
+
     // 定时器 安全检测
     // safety_timer = nh.createTimer(ros::Duration(2.0), &Global_Planner::safety_cb, this); 
     // 定时器 规划器算法执行周期
@@ -53,10 +46,8 @@ void Global_Planner::init(ros::NodeHandle& nh)
     // time_per_path
     track_path_timer = nh.createTimer(ros::Duration(time_per_path), &Global_Planner::track_path_cb, this);
 
-
     Astar_ptr.reset(new KinodynamicAstar);
     Astar_ptr->init(nh);
-    pub_message(message_pub, prometheus_msgs::Message::NORMAL, NODE_NAME, "Kinodynamic A_star init.");
 
     // 规划器状态参数初始化
     exec_state = EXEC_STATE::WAIT_GOAL;
@@ -84,8 +75,6 @@ void Global_Planner::goal_cb(const geometry_msgs::PoseStampedConstPtr& msg)
     goal_ready = true;
 
     // 获得新目标点
-    pub_message(message_pub, prometheus_msgs::Message::NORMAL, NODE_NAME,"Get a new goal point");
-
     cout << "[planner] Get a new goal "<< goal_pos << endl;
 }
 
@@ -110,11 +99,9 @@ void Global_Planner::drone_state_cb(const prometheus_msgs::DroneStateConstPtr& m
 
     Drone_odom.header = _DroneState.header;
     Drone_odom.child_frame_id = "base_link";
-
     Drone_odom.pose.pose.position.x = _DroneState.position[0];
     Drone_odom.pose.pose.position.y = _DroneState.position[1];
     Drone_odom.pose.pose.position.z = _DroneState.position[2];
-
     Drone_odom.pose.pose.orientation = _DroneState.attitude_q;
     Drone_odom.twist.twist.linear.x = _DroneState.velocity[0];
     Drone_odom.twist.twist.linear.y = _DroneState.velocity[1];
@@ -232,11 +219,10 @@ void Global_Planner::track_path_cb(const ros::TimerEvent& e)
         Command_Now.Reference_State.position_ref[0]     = goal_pos[0];
         Command_Now.Reference_State.position_ref[1]     = goal_pos[1];
         Command_Now.Reference_State.position_ref[2]     = goal_pos[2];
-
         Command_Now.Reference_State.yaw_ref             = desired_yaw;
         command_pub.publish(Command_Now);
 
-        pub_message(message_pub, prometheus_msgs::Message::NORMAL, NODE_NAME, "Reach the goal!");
+        cout << "[planner] Reach the goal!" << endl;
         
         // 停止执行
         path_ok = false;
@@ -251,9 +237,7 @@ void Global_Planner::track_path_cb(const ros::TimerEvent& e)
     int i = cur_id;
 
     cout << "Moving to Waypoint: [ " << cur_id << " / "<< Num_total_wp<< " ] "<<endl;
-    cout << "Moving to Waypoint:"   << path_cmd.poses[i].pose.position.x  << " [m] "
-                                    << path_cmd.poses[i].pose.position.y  << " [m] "
-                                    << path_cmd.poses[i].pose.position.z  << " [m] "<<endl; 
+    cout << "Moving to Waypoint:"   << path_cmd.poses[i].pose.position <<endl;
     // 控制方式如果是走航点，则需要对无人机进行限速，保证无人机的平滑移动
     // 采用轨迹控制的方式进行追踪，期望速度 = （期望位置 - 当前位置）/预计时间；
     
@@ -291,16 +275,15 @@ void Global_Planner::mainloop_cb(const ros::TimerEvent& e)
         {
             if(!odom_ready)
             {
-                message = "Need Odom.";
+                cout << "Need Odom." << endl;
             }else if(!drone_ready)
             {
-                message = "Drone is not ready.";
+                cout << "Drone is not ready." << endl;
             }else if(!sensor_ready)
             {
-                message = "Need sensor info.";
+                cout << "Need sensor info." << endl;
             }
 
-            pub_message(message_pub, prometheus_msgs::Message::WARN, NODE_NAME, message);
             exec_num=0;
         }  
 
@@ -322,8 +305,7 @@ void Global_Planner::mainloop_cb(const ros::TimerEvent& e)
             {
                 if(exec_num == 10)
                 {
-                    message = "Waiting for a new goal.";
-                    pub_message(message_pub, prometheus_msgs::Message::WARN, NODE_NAME,message);
+                    cout << "Waiting for a new goal." << endl;
                     exec_num=0;
                 }
             }else
@@ -353,7 +335,7 @@ void Global_Planner::mainloop_cb(const ros::TimerEvent& e)
             {
                 path_ok = false;
                 exec_state = EXEC_STATE::WAIT_GOAL;
-                pub_message(message_pub, prometheus_msgs::Message::WARN, NODE_NAME, "a star find no path, please reset the goal!");
+                cout << "astar find no path, please reset the goal!" << endl;
             }
             else
             {
@@ -366,7 +348,7 @@ void Global_Planner::mainloop_cb(const ros::TimerEvent& e)
                 tra_start_time = ros::Time::now();
                 exec_state = EXEC_STATE::TRACKING;
                 path_cmd_pub.publish(path_cmd);
-                pub_message(message_pub, prometheus_msgs::Message::NORMAL, NODE_NAME, "astart find path success!");
+                cout << "astart find path success!" << endl;
             }
 
             break;
@@ -443,5 +425,4 @@ int Global_Planner::get_start_point_id(void)
 
     return id;
 }
-
 }

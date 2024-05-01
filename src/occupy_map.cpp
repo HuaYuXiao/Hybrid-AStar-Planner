@@ -70,7 +70,7 @@ void Occupy_map::inflate_point_cloud(void)
 {
     if(!has_global_point)
     { 
-        pub_message(message_pub, prometheus_msgs::Message::WARN, NODE_NAME, "Occupy_map [inflate point cloud]: don't have global point, can't inflate!\n");
+        cout << "Occupy_map [inflate point cloud]: don't have global point, can't inflate!" << endl;
         return;
     }
 
@@ -161,7 +161,7 @@ void Occupy_map::setOccupancy(Eigen::Vector3d pos, int occ)
 {
     if (occ != 1 && occ != 0) 
     {
-        pub_message(message_pub, prometheus_msgs::Message::WARN, NODE_NAME, "occ value error!\n");
+        cout << "occ value error!" << endl;
         return;
     }
 
@@ -203,7 +203,7 @@ bool Occupy_map::check_safety(Eigen::Vector3d& pos, double check_distance)
     if(!isInMap(pos))
     {
         // 当前位置点不在地图内
-        pub_message(message_pub, prometheus_msgs::Message::WARN, NODE_NAME, "[check_safety]: the odom point is not in map\n");
+        cout << "[check_safety]: the odom point is not in map" << endl;
         return 0;
     }
     Eigen::Vector3i id;

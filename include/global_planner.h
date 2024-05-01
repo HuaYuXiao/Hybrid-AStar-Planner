@@ -2,27 +2,22 @@
 #define GLOBAL_PLANNER
 
 #include <ros/ros.h>
-
 #include <Eigen/Eigen>
 #include <iostream>
 #include <algorithm>
 #include <iostream>
-
 #include <geometry_msgs/PoseStamped.h>
 #include <std_msgs/Bool.h>
 #include <sensor_msgs/PointCloud2.h>
 #include <sensor_msgs/LaserScan.h>
 #include <nav_msgs/Odometry.h>
 #include <nav_msgs/Path.h>
-
 #include "prometheus_msgs/PositionReference.h"
 #include "prometheus_msgs/Message.h"
 #include "prometheus_msgs/DroneState.h"
 #include "prometheus_msgs/ControlCommand.h"
-
 #include "kinodynamic_astar.h"
 #include "occupy_map.h"
-#include "tools.h"
 #include "message_utils.h"
 
 using namespace std;
@@ -33,9 +28,6 @@ using namespace std;
 
 namespace Global_Planning
 {
-
-extern ros::Publisher message_pub;
-
 class Global_Planner
 {
 private:

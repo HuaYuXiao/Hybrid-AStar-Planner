@@ -6,28 +6,21 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
-
 #include <boost/functional/hash.hpp>
 #include <queue>
-
 #include <sensor_msgs/PointCloud2.h>
 #include <nav_msgs/Path.h>
 #include "occupy_map.h"
-#include "tools.h"
 #include "message_utils.h"
 
 #define NODE_NAME "Global_Planner [Hybrid Astar]"
 
 namespace Global_Planning
 {
-
 #define IN_CLOSE_SET 'a'
 #define IN_OPEN_SET 'b'
 #define NOT_EXPAND 'c'
 #define inf 1 >> 30
-
-
-extern ros::Publisher message_pub;
 
 class PathNode
 {

@@ -19,7 +19,6 @@ find_package(catkin REQUIRED COMPONENTS
 	   prometheus_msgs
 	)
 
-
 catkin_package(
 	INCLUDE_DIRS include
 	LIBRARIES Global_Planning
@@ -37,13 +36,11 @@ include_directories(
      )
 link_directories(${PCL_LIBRARY_DIRS})
 
-
 add_executable(hybrid_astar
 	src/global_planner_node.cpp
 	src/global_planner.cpp
 	src/kinodynamic_astar.cpp
 	src/occupy_map.cpp
-	src/tools.cpp
 	)
 
 target_link_libraries(hybrid_astar

@@ -6,7 +6,6 @@ using namespace Eigen;
 
 namespace Global_Planning
 {
-
 KinodynamicAstar::~KinodynamicAstar()
 {
   for (int i = 0; i < max_search_num; i++)
@@ -60,6 +59,8 @@ void KinodynamicAstar::init(ros::NodeHandle& nh)
   // 读取地图参数
   origin_ =  Occupy_map_ptr->min_range_;
   map_size_3d_ = Occupy_map_ptr->max_range_ - Occupy_map_ptr->min_range_;
+
+    cout << "[planner] Kinodynamic A_star init." << endl;
 }
 
 void KinodynamicAstar::reset()
@@ -92,12 +93,9 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v, 
   // 首先检查目标点是否可到达
   if(Occupy_map_ptr->getOccupancy(end_pt))
   {
-    pub_message(message_pub, prometheus_msgs::Message::WARN, NODE_NAME, "Astar can't find path: goal point is occupied.");
+    cout << "Astar can't find path: goal point is occupied." << endl;
     return NO_PATH;
   }
-
-  // 计时
-  ros::Time time_astar_start = ros::Time::now();
 
   start_vel_ = start_v;
   start_acc_ = start_a;
@@ -162,9 +160,6 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v, 
       terminate_node = cur_node;
       retrievePath(terminate_node);
       has_path_ = true;
-
-      // 时间一般很短，远远小于膨胀点云的时间
-      printf("Astar take time %f s. \n", (ros::Time::now()-time_astar_start).toSec());
 
       if (reach_end)
       {
@@ -389,7 +384,7 @@ int KinodynamicAstar::search(Eigen::Vector3d start_pt, Eigen::Vector3d start_v, 
 
   // 搜索完所有可行点，即使没达到最大搜索次数，也没有找到路径
   // 这种一般是因为无人机周围被占据，或者无人机与目标点之间无可通行路径造成的
-  pub_message(message_pub, prometheus_msgs::Message::WARN, NODE_NAME, "max_search_num: open set empty.");
+  cout << "max_search_num: open set empty." << endl;
   return NO_PATH;
 }
 
@@ -655,7 +650,7 @@ nav_msgs::Path KinodynamicAstar::get_ros_path()
   A_star_path_cmd.poses.clear();
   for (int i=0; i<path.size(); ++i)
   {
-      path_i_pose .header.frame_id = "world";
+      path_i_pose.header.frame_id = "world";
       path_i_pose.pose.position.x = path[i](0);
       path_i_pose.pose.position.y = path[i](1);
       path_i_pose.pose.position.z = path[i](2);
@@ -691,6 +686,8 @@ Eigen::Vector3i KinodynamicAstar::posToIndex(Eigen::Vector3d pt)
 int KinodynamicAstar::timeToIndex(double time)
 {
   int idx = floor((time - time_origin_) * inv_time_resolution_);
+
+  return idx;
 }
 
 void KinodynamicAstar::stateTransit(Eigen::Matrix<double, 6, 1>& state0, Eigen::Matrix<double, 6, 1>& state1,

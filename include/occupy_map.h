@@ -3,10 +3,8 @@
 
 #include <iostream>
 #include <algorithm>
-
 #include <ros/ros.h>
 #include <Eigen/Eigen>
-
 #include <pcl_ros/point_cloud.h>
 #include <pcl_ros/transforms.h>
 #include <pcl/point_cloud.h>
@@ -18,17 +16,12 @@
 #include <nav_msgs/Odometry.h>
 #include <visualization_msgs/Marker.h>
 #include <sensor_msgs/LaserScan.h>
-
-#include "tools.h"
 #include "message_utils.h"
 
 #define NODE_NAME "Global_Planner [map]"
 
 namespace Global_Planning
 {
-
-extern ros::Publisher message_pub;
-
 class Occupy_map
 {
     public:
