@@ -16,7 +16,7 @@ void Global_Planner::init(ros::NodeHandle& nh)
     // 选择地图更新方式：　0代表全局点云，１代表局部点云，２代表激光雷达scan数据
     nh.param("global_planner/map_input", map_input, 0); 
     // 是否为仿真模式
-    nh.param("global_planner/sim_mode", sim_mode, false); 
+    nh.param("global_planner/sim_mode", sim_mode, true);
 
     nh.param("global_planner/map_groundtruth", map_groundtruth, false); 
 
@@ -208,8 +208,7 @@ void Global_Planner::track_path_cb(const ros::TimerEvent& e)
     is_new_path = false;
 
     // 抵达终点
-    if(cur_id == Num_total_wp - 1)
-    {
+    if(cur_id == Num_total_wp - 1){
         Command_Now.header.stamp = ros::Time::now();
         Command_Now.Mode                                = prometheus_msgs::ControlCommand::Move;
         Command_Now.Command_ID                          = Command_Now.Command_ID + 1;
@@ -220,6 +219,7 @@ void Global_Planner::track_path_cb(const ros::TimerEvent& e)
         Command_Now.Reference_State.position_ref[1]     = goal_pos[1];
         Command_Now.Reference_State.position_ref[2]     = goal_pos[2];
         Command_Now.Reference_State.yaw_ref             = desired_yaw;
+
         command_pub.publish(Command_Now);
 
         cout << "[planner] Reach the goal!" << endl;

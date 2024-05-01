@@ -77,14 +77,9 @@ void Occupy_map::inflate_point_cloud(void)
     // 发布未膨胀点云
     global_pcl_pub.publish(*global_env_);
 
-    //记录开始时间
-    ros::Time time_start = ros::Time::now();
-
     // 转化为PCL的格式进行处理
     pcl::PointCloud<pcl::PointXYZ> latest_global_cloud_;
     pcl::fromROSMsg(*global_env_, latest_global_cloud_);
-
-    //printf("time 1 take %f [s].\n",   (ros::Time::now()-time_start).toSec());
 
     if ((int)latest_global_cloud_.points.size() == 0)  
     {return;}
